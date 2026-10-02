@@ -1,4 +1,3 @@
--- Copy this file to 020_reporting_function.sql and apply it.
 -- A function centralises the read logic but does not store an aggregate result.
 
 create or replace function captured_revenue_for_day(

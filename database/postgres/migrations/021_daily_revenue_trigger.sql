@@ -1,4 +1,3 @@
--- Copy this file to 021_daily_revenue_trigger.sql and apply it.
 -- This is deliberately incomplete. Document the behaviour before extending it.
 
 create table daily_revenue_by_operator (

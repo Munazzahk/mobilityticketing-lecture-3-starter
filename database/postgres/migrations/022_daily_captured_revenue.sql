@@ -1,5 +1,3 @@
--- Copy this file to 022_daily_captured_revenue.sql and apply it.
-
 create materialized view daily_captured_revenue as
 select
     r.operator_id,

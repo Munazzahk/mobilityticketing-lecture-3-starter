@@ -9,9 +9,45 @@ Before the experiments, the base query returned:
 | OP-BUS | 2026-04-29 | 36.00 | 1 |
 | OP-METRO | 2026-04-29 | 36.00 | 1 |
 
-The `payments` table is the authority for the reporting experiment.
+The `payments` table is the authority for the reporting experiment as it reads directly from the source of truth.
 
-## Experiment results
+## Experiment setup
+Run the SQL to create the function, materialized view and trigger summary
+Insert following sql to create a new captured payment:
+
+sql
+insert into tickets (
+    id, user_id, trip_id, ticket_code, status, product_code,
+    valid_from_utc, valid_to_utc, price, currency
+) values (
+    'TICKET-REPORT-1',
+    'USER-1',
+    'TRIP-M2-20260429-1200',
+    'CODE-M2-REPORT-1',
+    'Active',
+    'SINGLE',
+    '2026-04-29 11:45:00+00',
+    '2026-04-29 14:00:00+00',
+    20.00,
+    'DKK'
+);
+
+insert into payments (
+    id, user_id, ticket_id, external_payment_reference,
+    amount, currency, status, created_utc
+) values (
+    'PAYMENT-REPORT-1',
+    'USER-1',
+    'TICKET-REPORT-1',
+    'gateway-report-0001',
+    20.00,
+    'DKK',
+    'Captured',
+    '2026-04-29 11:40:00+00'
+);
+
+
+## Experiment results for trigger summary
 
 | Test | Base/function result | Trigger summary | What happened |
 | --- | --- | --- | --- |
@@ -21,7 +57,6 @@ The `payments` table is the authority for the reporting experiment.
 | Failed → Captured | OP-METRO: 76 / 3 | Still 20 / 1 | Trigger does not react to UPDATE |
 | Captured → Refunded | OP-METRO: 56 / 2 | Still 20 / 1 | Trigger does not react to UPDATE |
 | Delete captured test payment | OP-METRO: 36 / 1 | Still 20 / 1 | Trigger does not react to DELETE |
-| Duplicate external reference | Duplicate was accepted | Increased to 40 / 2 | Duplicate delivery can be counted twice |
 
 ## Materialized view staleness
 
@@ -36,6 +71,19 @@ After:
 
 sql
 REFRESH MATERIALIZED VIEW daily_captured_revenue;
+
+Overview of the results:
+Before payment:
+Base/function = 36
+Materialized view = 36
+
+After payment:
+Base/function = 56
+Materialized view = 36  ← STALE
+
+After REFRESH:
+Base/function = 56
+Materialized view = 56
 
 ## Responsibility matrix
 
